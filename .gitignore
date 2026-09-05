@@ -1,0 +1,48 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.venv/
+venv/
+env/
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+
+# =========================
+# Cursor
+# =========================
+.cursor/
+
+# =========================
+# Visual Studio Code
+# =========================
+.vscode/
+
+# =========================
+# Docker
+# =========================
+*.log
+
+# =========================
+# Frontend (se in futuro useremo Node)
+# =========================
+node_modules/
+
+# =========================
+# Sistema operativo
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Dataset locale
+# =========================
+data/Dataset Evento Congresso 2025.ods
