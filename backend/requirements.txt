@@ -1,3 +1,8 @@
 # placeholder
 pandas
 odfpy
+fastapi
+uvicorn
+sqlalchemy
+asyncpg
+python-dotenv
