@@ -1,10 +1,10 @@
-# placeholder
 from fastapi import FastAPI
-from app.database import Base, engine
+
+from app.api.participants import router as participants_router
 
 app = FastAPI(title="Congresso 2025 API")
 
-Base.metadata.create_all(bind=engine)
+app.include_router(participants_router)
 
 
 @app.get("/")
