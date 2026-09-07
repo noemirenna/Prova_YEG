@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel
 
 
@@ -26,4 +28,9 @@ class DashboardFunnelResponse(BaseModel):
 
 class StakeholderCountResponse(BaseModel):
     stakeholder: str
+    count: int
+
+
+class DailyCountResponse(BaseModel):
+    day: date
     count: int

@@ -5,7 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.participant import Participant, StakeholderType
-from app.schemas import DashboardFunnelResponse, StakeholderCountResponse
+from app.schemas import (
+    DailyCountResponse,
+    DashboardFunnelResponse,
+    StakeholderCountResponse,
+)
 
 router = APIRouter()
 
@@ -70,3 +74,31 @@ async def get_dashboard_stakeholders(
         raise HTTPException(status_code=500, detail="Database error") from exc
 
     return [StakeholderCountResponse(**row) for row in stakeholders]
+
+
+@router.get(
+    "/dashboard/daily",
+    response_model=list[DailyCountResponse],
+)
+async def get_dashboard_daily(
+    db: AsyncSession = Depends(get_db),
+):
+    query = text(
+        """
+        SELECT pt.value_date AS day, COUNT(pt.participant_id) AS count
+        FROM participant_touchpoints pt
+        JOIN touchpoints t ON t.id = pt.touchpoint_id
+        WHERE t.code = 'giorno_visita'
+            AND pt.value_date IS NOT NULL
+        GROUP BY pt.value_date
+        ORDER BY pt.value_date ASC
+        """
+    )
+
+    try:
+        result = await db.execute(query)
+        daily_counts = result.mappings().all()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=500, detail="Database error") from exc
+
+    return [DailyCountResponse(**row) for row in daily_counts]
