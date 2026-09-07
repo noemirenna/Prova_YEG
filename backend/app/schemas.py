@@ -22,3 +22,8 @@ class DashboardFunnelResponse(BaseModel):
     stand: int
     reserved_room: int
     symposium: int
+
+
+class StakeholderCountResponse(BaseModel):
+    stakeholder: str
+    count: int
