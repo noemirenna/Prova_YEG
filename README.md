@@ -118,6 +118,4 @@ Il dataset è una fotografia dell'evento e non permette di dimostrare che un can
 - applicare davvero il filtro Regione a tutte le route della dashboard;
 - aggiungere test automatici per importazione, API e query principali;
 - aggiungere autenticazione e gestione degli errori lato frontend;
-- prevedere filtri aggiuntivi per stakeholder e canale;
-- aggiungere paginazione e una vista tabellare dei partecipanti;
-- permettere l'esportazione dei risultati e inserire grafici aggiuntivi.
+- prevedere filtri aggiuntivi;
