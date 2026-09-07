@@ -1,1 +1,87 @@
-/* placeholder */
+:root {
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	color: #1f2937;
+	background: #f3f6f8;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; }
+
+.page-header {
+	padding: 2.5rem 1.25rem 2rem;
+	color: #ffffff;
+	background: #17324d;
+}
+
+.container { width: min(1120px, calc(100% - 2.5rem)); margin: 0 auto; }
+
+.eyebrow {
+	margin: 0 0 0.5rem;
+	color: #9fd8d2;
+	font-size: 0.8rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+h1, h2 { margin: 0; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.75rem); }
+
+main { padding: 2rem 0 3rem; }
+
+.filter-card, .chart-card {
+	border: 1px solid #dbe3e8;
+	border-radius: 10px;
+	background: #ffffff;
+	box-shadow: 0 3px 12px rgba(31, 41, 55, 0.06);
+}
+
+.filter-card {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+	padding: 1rem 1.25rem;
+}
+
+.filter-card label { font-weight: 700; }
+
+select {
+	min-width: 220px;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid #b8c8d2;
+	border-radius: 6px;
+	color: inherit;
+	background: #ffffff;
+	font: inherit;
+}
+
+.dashboard-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1.5rem;
+}
+
+.chart-card { min-width: 0; padding: 1.25rem; }
+.chart-card-wide { grid-column: 1 / -1; }
+h2 { font-size: 1.1rem; }
+
+.chart-status {
+	min-height: 1.4rem;
+	margin: 0.5rem 0 0.75rem;
+	color: #657482;
+	font-size: 0.9rem;
+}
+
+.chart-status.is-error { color: #b42318; }
+.chart-status.is-empty { color: #657482; }
+.chart-wrapper { position: relative; height: 290px; }
+
+@media (max-width: 700px) {
+	.container { width: min(100% - 1.5rem, 1120px); }
+	.filter-card { align-items: stretch; flex-direction: column; gap: 0.5rem; }
+	select { min-width: 0; width: 100%; }
+	.dashboard-grid { grid-template-columns: 1fr; }
+	.chart-card-wide { grid-column: auto; }
+}

@@ -1,1 +1,49 @@
-<!-- placeholder -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dashboard Congresso 2025</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<header class="page-header">
+		<div class="container">
+			<p class="eyebrow">Analisi evento</p>
+			<h1>Dashboard Congresso 2025</h1>
+		</div>
+	</header>
+
+	<main class="container">
+		<section class="filter-card" aria-labelledby="filter-title">
+			<label id="filter-title" for="region-filter">Regione</label>
+			<select id="region-filter">
+				<option value="">Tutte le regioni</option>
+			</select>
+		</section>
+
+		<section class="dashboard-grid" aria-label="Grafici dashboard">
+			<article class="chart-card">
+				<h2>Funnel di partecipazione</h2>
+				<p class="chart-status" id="funnel-status" role="status">Caricamento dati...</p>
+				<div class="chart-wrapper"><canvas id="funnel-chart"></canvas></div>
+			</article>
+
+			<article class="chart-card">
+				<h2>Stakeholder</h2>
+				<p class="chart-status" id="stakeholders-status" role="status">Caricamento dati...</p>
+				<div class="chart-wrapper"><canvas id="stakeholders-chart"></canvas></div>
+			</article>
+
+			<article class="chart-card chart-card-wide">
+				<h2>Andamento giornaliero</h2>
+				<p class="chart-status" id="daily-status" role="status">Caricamento dati...</p>
+				<div class="chart-wrapper"><canvas id="daily-chart"></canvas></div>
+			</article>
+		</section>
+	</main>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+	<script src="script.js"></script>
+</body>
+</html>
