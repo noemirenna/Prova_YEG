@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -36,8 +37,13 @@ async def get_participants(
         base_query = base_query.where(Region.name == region)
 
     count_query = select(func.count()).select_from(base_query.subquery())
-    total = await db.scalar(count_query)
-    result = await db.execute(base_query.offset(offset).limit(limit))
+    try:
+        total = await db.scalar(count_query)
+        result = await db.execute(
+            base_query.order_by(Participant.id.asc()).offset(offset).limit(limit)
+        )
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=500, detail="Database error") from exc
 
     participants = []
     for participant, stakeholder, region_name, channel in result.all():
