@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import os
+from datetime import datetime
 
 import pandas as pd
 import psycopg2
@@ -14,6 +15,7 @@ PERCORSO_DATASET = (
     / "Dataset Evento Congresso 2025.ods"
 )
 NOME_FOGLIO = "02_Partecipanti"
+NOME_FOGLIO_TOUCHPOINT = "01_Interazioni"
 
 
 def valore_o_none(valore):
@@ -58,6 +60,43 @@ def carica_partecipanti():
     return tabella
 
 
+def carica_touchpoints():
+    """Legge il catalogo dei touchpoint dal foglio delle interazioni."""
+    touchpoints = pd.read_excel(
+        PERCORSO_DATASET,
+        sheet_name=NOME_FOGLIO_TOUCHPOINT,
+        engine="odf",
+    )
+    return touchpoints[touchpoints["Fase del percorso"] != "Anagrafica"]
+
+
+def normalizza_fase(fase):
+    """Converte la fase del dataset nel valore previsto dal database."""
+    fase = fase.lower()
+    if fase.startswith("pre-evento"):
+        return "pre_event"
+    if fase.startswith("on-site"):
+        return "on_site"
+    if fase.startswith("sessione"):
+        return "session"
+    if fase.startswith("post-evento"):
+        return "post_event"
+    raise ValueError(f"Fase non riconosciuta: {fase}")
+
+
+def normalizza_tipo(tipo):
+    """Converte il tipo del dataset nel valore previsto dal database."""
+    if tipo == "booleano":
+        return "boolean"
+    if tipo == "conteggio" or tipo == "minuti":
+        return "integer"
+    if tipo == "tasso da 0 a 1":
+        return "decimal"
+    if tipo == "data":
+        return "date"
+    raise ValueError(f"Tipo di dato non riconosciuto: {tipo}")
+
+
 def inserisci_lookup(cursor, tabella, valori):
     """Inserisce i valori unici e restituisce una mappa valore -> ID."""
     for valore in sorted({valore for valore in valori if valore is not None}):
@@ -74,15 +113,102 @@ def inserisci_lookup(cursor, tabella, valori):
     return {nome: identificativo for identificativo, nome in cursor.fetchall()}
 
 
-def inserisci_touchpoints(cursor):
-    """Punto di estensione per il futuro import in participant_touchpoints."""
-    # In seguito qui si potranno collegare i valori del foglio 01_Interazioni.
-    pass
+def inserisci_touchpoints(cursor, touchpoints):
+    """Inserisce i touchpoint e restituisce la mappa codice -> ID."""
+    for _, touchpoint in touchpoints.iterrows():
+        tipo = normalizza_tipo(touchpoint["Tipo di dato"])
+        cursor.execute(
+            """
+            INSERT INTO touchpoints (code, source_column, name, phase, data_type)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (code) DO UPDATE SET
+                source_column = EXCLUDED.source_column,
+                name = EXCLUDED.name,
+                phase = EXCLUDED.phase,
+                data_type = EXCLUDED.data_type
+            """,
+            (
+                touchpoint["Nome tecnico"],
+                touchpoint["Intestazione nel foglio 02"],
+                touchpoint["Intestazione nel foglio 02"],
+                normalizza_fase(touchpoint["Fase del percorso"]),
+                tipo,
+            ),
+        )
+
+    cursor.execute("SELECT id, code FROM touchpoints")
+    return {code: touchpoint_id for touchpoint_id, code in cursor.fetchall()}
+
+
+def valore_touchpoint(valore, tipo):
+    """Prepara un valore per la colonna corretta di participant_touchpoints."""
+    valore = valore_o_none(valore)
+    if valore is None:
+        return None
+    if tipo == "booleano":
+        return str(valore).strip().lower() in {"1", "1.0", "si", "sì", "true"}
+    if tipo in {"conteggio", "minuti"}:
+        return int(valore)
+    if tipo == "data":
+        if hasattr(valore, "date"):
+            return valore.date()
+        return datetime.strptime(str(valore), "%d/%m/%Y").date()
+    return valore
+
+
+def inserisci_valori_touchpoints(cursor, partecipanti, touchpoints, touchpoint_ids):
+    """Collega i valori presenti dei partecipanti ai relativi touchpoint."""
+    cursor.execute("SELECT id, email FROM participants")
+    participant_ids = {email: participant_id for participant_id, email in cursor.fetchall()}
+
+    for _, partecipante in partecipanti.iterrows():
+        participant_id = participant_ids.get(valore_o_none(partecipante["email"]))
+        if participant_id is None:
+            continue
+
+        for _, touchpoint in touchpoints.iterrows():
+            valore = valore_touchpoint(
+                partecipante[touchpoint["Intestazione nel foglio 02"]],
+                touchpoint["Tipo di dato"],
+            )
+            if valore is None:
+                continue
+
+            tipo = normalizza_tipo(touchpoint["Tipo di dato"])
+            valori = {
+                "value_boolean": valore if tipo == "boolean" else None,
+                "value_integer": valore if tipo == "integer" else None,
+                "value_decimal": valore if tipo == "decimal" else None,
+                "value_date": valore if tipo == "date" else None,
+            }
+            cursor.execute(
+                """
+                INSERT INTO participant_touchpoints (
+                    participant_id, touchpoint_id, value_boolean,
+                    value_integer, value_decimal, value_date
+                )
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (participant_id, touchpoint_id) DO UPDATE SET
+                    value_boolean = EXCLUDED.value_boolean,
+                    value_integer = EXCLUDED.value_integer,
+                    value_decimal = EXCLUDED.value_decimal,
+                    value_date = EXCLUDED.value_date
+                """,
+                (
+                    participant_id,
+                    touchpoint_ids[touchpoint["Nome tecnico"]],
+                    valori["value_boolean"],
+                    valori["value_integer"],
+                    valori["value_decimal"],
+                    valori["value_date"],
+                ),
+            )
 
 
 def importa_dati():
     """Legge il dataset e importa lookup e partecipanti in una transazione."""
     partecipanti = carica_partecipanti()
+    touchpoints = carica_touchpoints()
     database_url = os.getenv(
         "DATABASE_URL",
         "postgresql://postgres:postgres@localhost:5432/congresso_db",
@@ -131,7 +257,10 @@ def importa_dati():
                     ),
                 )
 
-            inserisci_touchpoints(cursor)
+            touchpoint_ids = inserisci_touchpoints(cursor, touchpoints)
+            inserisci_valori_touchpoints(
+                cursor, partecipanti, touchpoints, touchpoint_ids
+            )
 
     print(f"Import completato: {len(partecipanti)} righe elaborate.")
 

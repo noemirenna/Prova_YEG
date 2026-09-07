@@ -15,3 +15,10 @@ class ParticipantsResponse(BaseModel):
     limit: int
     offset: int
     participants: list[ParticipantResponse]
+
+
+class DashboardFunnelResponse(BaseModel):
+    reached: int
+    stand: int
+    reserved_room: int
+    symposium: int
