@@ -1,6 +1,6 @@
 # Congresso 2025
 
-Prova tecnica YEG per un'applicazione data-oriented dedicata all'analisi di un congresso.
+Prova tecnica per YEG dedicata allo sviluppo di una piccola applicazione data-oriented per l'analisi di un congresso medico.
 Il progetto importa i dati da un file ODS in PostgreSQL, li espone tramite API FastAPI e li visualizza in una dashboard HTML, CSS e JavaScript.
 
 ## Tecnologie utilizzate
@@ -20,7 +20,7 @@ git clone https://github.com/noemirenna/Prova_YEG.git
 cd Prova_YEG
 ```
 
-Creare il file locale delle variabili d'ambiente:
+Creare il file delle variabili d'ambiente:
 
 ```bash
 cp .env.example .env
@@ -44,13 +44,14 @@ Avviare PostgreSQL e il backend:
 docker compose up --build
 ```
 
-In un secondo terminale, importare il dataset usando il container del backend. Il mount temporaneo rende disponibile la cartella `data` al comando:
+Quando il backend è avviato, aprire un secondo terminale ed eseguire il comando per importare il dataset nel database.
 
 ```bash
 docker compose run --rm -v "${PWD}/data:/data" backend python scripts/import_data.py
 ```
 
-Su PowerShell si può usare lo stesso comando con `${PWD}`. Il frontend è statico e va servito separatamente:
+Su PowerShell si può usare lo stesso comando con `${PWD}`.
+Il frontend è composto da file HTML, CSS e JavaScript statici, quindi va avviato separatamente con il server HTTP di Python:
 
 ```bash
 python -m http.server 5500 --directory frontend
@@ -99,23 +100,23 @@ Lo script `backend/scripts/import_data.py` gestisce le anomalie presenti nel flu
 
 ## Cosa mostra la dashboard
 
-La dashboard mostra un funnel con raggiunti, visite allo stand, accessi alla sala VIP e presenze al simposio; un confronto dei partecipanti per categoria di stakeholder; e l'andamento giornaliero delle visite. L'interfaccia contiene un filtro globale per Regione, ma al momento le route `/dashboard/*` non ricevono il parametro Regione: quindi il filtro non aggiorna ancora i tre grafici e va considerato un limite attuale dell'implementazione.
+La dashboard mostra un funnel con raggiunti, visite allo stand, accessi alla sala VIP e presenze al simposio; un confronto dei partecipanti per categoria di stakeholder; e l'andamento giornaliero delle visite. L'interfaccia include un filtro globale per Regione. Al momento, però, le route `/dashboard/*` non ricevono ancora questo parametro, quindi i tre grafici non vengono aggiornati. Questo rappresenta un limite dell'implementazione attuale.
 
 ## Tre osservazioni sui dati
 
-Le osservazioni derivano dal dataset locale usato per la prova e sono descrittive, non causali:
+Le osservazioni derivano dal dataset locale analizzato durante la prova. I valori riportati fanno riferimento ai dati del file ODS utilizzato per l'importazione:
 
 1. Sono presenti 2.375 partecipanti; 1.846 hanno `Database DEM` come canale di ingaggio, quindi è il canale nettamente più rappresentato.
 2. Le visite allo stand sono 168, gli accessi alla sala VIP 61 e le presenze al simposio 96. I conteggi descrivono touchpoint distinti e non sono necessariamente un funnel cumulativo.
-3. Le visite registrate per giorno sono 64 il 15 ottobre, 72 il 16, 25 il 17 e 7 il 18 ottobre 2025: il picco è quindi il 16 ottobre.
+3. Le visite registrate per giorno sono 64 il 15 ottobre, 72 il 16 ottobre, 25 il 17 ottobre e 7 il 18 ottobre 2025: il picco è quindi il 16 ottobre.
 
 ## Limiti
 
-Il dataset è una fotografia dell'evento e non permette di dimostrare che un canale abbia causato una maggiore partecipazione. I conteggi mostrano associazioni, non causalità. Mancano inoltre informazioni come costi, campagne complete, identificazione certa dei duplicati e contesto temporale oltre alle date disponibili. Il file ODS è locale e non è incluso nel repository; senza importazione il database resta vuoto. Il filtro Regione della dashboard deve ancora essere collegato alle query dei grafici.
+Il dataset è una fotografia dell'evento e non ha permesso di dimostrare che un canale abbia causato una maggiore partecipazione. I risultati mostrano associazioni tra i dati, ma non un rapporto di causa-effetto. Mancano inoltre informazioni come costi, campagne complete, informazioni sufficienti per identificare con certezza eventuali duplicati e contesto temporale oltre alle date disponibili. Il file ODS è locale e non è incluso nel repository; senza importazione il database resta vuoto. Il filtro Regione della dashboard deve ancora essere collegato alle query dei grafici.
 
 ## Miglioramenti futuri
 
-- applicare davvero il filtro Regione a tutte le route della dashboard;
+- collegare il filtro Regione a tutte le route della dashboard;
 - aggiungere test automatici per importazione, API e query principali;
-- aggiungere autenticazione e gestione degli errori lato frontend;
-- prevedere filtri aggiuntivi;
+- aggiungere autenticazione;
+- aggiungere filtri aggiuntivi;
